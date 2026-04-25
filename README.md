@@ -1,14 +1,14 @@
 # Distributed Material Handling System using Siemens Multi-PLC Architecture
 
 ## Project Overview
-This project implements an industrial-grade Baggage Handling System (BHS) using a distributed Siemens PLC architecture. It demonstrates the design, implementation, and commissioning phase of a multi-PLC network consisting of an S7-1500 Master and S7-300 Sub-PLCs, optimized for material flow, routing, and system-level diagnostics.
+This project implements an industrial-grade Baggage Handling System (BHS) using a distributed Siemens PLC architecture. It demonstrates a high-complexity integration of Siemens S7-1500 and S7-300 series controllers, multi-language software development (STL, SCL, C++, Python), and advanced TIA Portal library management.
 
-The system is designed for high-throughput logistics, airport baggage handling, and automated warehousing applications.
+The system is optimized for high-throughput logistics and airport baggage routing, featuring edge analytics for predictive maintenance and real-time performance monitoring.
 
 ---
 
-## System Architecture
-The system follows a tiered industrial communication model as illustrated below:
+## Advanced System Architecture
+The system utilizes a multi-tier communication and processing model, integrating IT (Information Technology) with OT (Operational Technology).
 
 ```mermaid
 graph TD
@@ -16,11 +16,21 @@ graph TD
     classDef sub fill:#1e3a5f,stroke:#fff,stroke-width:1px,color:#fff;
     classDef io fill:#c0392b,stroke:#fff,stroke-width:1px,color:#fff;
     classDef scada fill:#d4ac0d,stroke:#333,stroke-width:2px,color:#333;
+    classDef it fill:#8e44ad,stroke:#fff,stroke-width:2px,color:#fff;
 
-    SCADA[WinCC / SCADA System]:::scada -- Ethernet/IP --> MasterPLC[Master PLC: S7-1500]:::master
+    SCADA[WinCC / SCADA System]:::scada
+    PythonEdge[Python Edge Analytics]:::it
+    CppDriver[S7-1500 ODK C++ Driver]:::it
+    MasterPLC[Master PLC: S7-1500]:::master
+    SubPLC1[Line Controller 1: S7-300]:::sub
+    SubPLC2[Line Controller 2: S7-300]:::sub
     
-    MasterPLC -- Profinet --> SubPLC1[Line Controller 1: S7-300]:::sub
-    MasterPLC -- Profinet --> SubPLC2[Line Controller 2: S7-300]:::sub
+    PythonEdge -- MQTT/OPC-UA --> SCADA
+    CppDriver -- Internal S7 Bus --> MasterPLC
+    SCADA -- Profinet --> MasterPLC
+    
+    MasterPLC -- I-Device Communication --> SubPLC1
+    MasterPLC -- I-Device Communication --> SubPLC2
     
     SubPLC1 -- AS-i Bus --> Sensors1[PE Sensors / Solenoids]:::io
     SubPLC1 -- Profinet --> VFD1[G120 Drives / Motors]:::io
@@ -28,69 +38,62 @@ graph TD
     SubPLC2 -- AS-i Bus --> Sensors2[PE Sensors / Solenoids]:::io
     SubPLC2 -- Profinet --> VFD2[G120 Drives / Motors]:::io
 
-    subgraph Management ["Management Level"]
+    subgraph IT_Layer ["Enterprise & IT Layer"]
+    PythonEdge
     SCADA
     end
 
-    subgraph Control ["Control Level"]
+    subgraph High_Speed ["High Performance Computing"]
+    CppDriver
     MasterPLC
     end
 
-    subgraph Field ["Field Level"]
+    subgraph Field_Execution ["Distributed Control"]
     SubPLC1
     SubPLC2
     end
 ```
 
-### Key Technical Features
-*   Multi-PLC Coordination: S7-1500 manages global routing while S7-300 handles local high-speed conveyor tasks.
-*   Standard Software Library: Developed modular Function Blocks (FBs) for Motors, Conveyors, and Diverters to ensure R&D scalability.
-*   STL and SCL Implementation: Core interlocks written in Statement List (STL) for performance, and complex routing logic in Structured Control Language (SCL).
-*   Network Resilience: Implemented heartbeat-based watchdog logic for Profinet communication failure mitigation.
+---
+
+## Real-time Performance Analytics
+The following chart represents the simulated material flow throughput from the system, generated using our Edge Analytics Python module. This data is extracted via OPC-UA from the PLC and processed for management reporting.
+
+![System Throughput Analytics](./assets/system_throughput_analytics.png)
 
 ---
 
-## Repository Structure
-*   docs: Engineering documentation (System Architecture, Risk Analysis, Commissioning Checklists).
-*   src/plc_standard_lib: TIA Portal reusable library blocks (Motor Control, Zone Accumulation, Diverter).
-*   src/plc_core_logic: Main routing algorithms and system state machines.
-*   src/scada_hmi: HMI tag dictionaries and alarm matrix for SCADA integration.
+## Multi-Language Engineering Stack
+This project showcases the ability to act as a Controls Lead by integrating multiple technical domains:
+
+### 1. Siemens TIA Portal (STL, SCL, LAD)
+*   **SCL (Structured Control Language):** Used for advanced data handling, routing tables, and Profinet I-Device data mapping.
+*   **STL (Statement List):** Utilized for high-performance bit manipulation and legacy S7-300 interlock compatibility.
+*   **Library Management:** Aggressive use of TIA Portal Global Libraries with Version Control (V17/V18) to ensure modularity across R&D projects.
+
+### 2. Embedded C++ (S7-1500 ODK)
+*   **S7-1500 Open Development Kit:** Custom C++ driver for high-frequency vibration data pre-processing, enabling predictive maintenance before data reaches the standard PLC cyclic interrupt (OB1).
+*   Implementation: `src/cpp_drivers/S7_HighSpeed_Driver.cpp`
+
+### 3. Python (Edge Intelligence)
+*   **Predictive Maintenance:** Python scripts for trend analysis and real-time visualization using Matplotlib and Seaborn.
+*   **Communication:** Interfacing with PLCs via Snap7 or OPC-UA for data extraction and cloud-readiness.
+*   Implementation: `src/edge_analytics/system_monitor.py`
 
 ---
 
-## Control Logic Highlights
-
-### 1. Smart Routing (SCL)
-The system uses a priority-based round-robin merge algorithm to balance load between conveyor lines, preventing bottlenecks in the sortation area.
-Implementation: src/plc_core_logic/Main_Routing_Logic.scl
-
-### 2. STL State Machine
-A robust statement-list state machine governs the system-level transitions (Idle, Starting, Running, Fault), ensuring deterministic behavior.
-Implementation: src/plc_core_logic/State_Machine.stl
-
-### 3. Fault Mitigation
-Logic was designed to handle common industrial failures:
-*   Jam Detection: Auto-stop upstream zones if a photo-eye is blocked for more than 5 seconds.
-*   Feedback Timeout: Monitor solenoid feedback; if transit not reached, trigger diverter alarm.
+## Key Control Features
+*   **Multi-PLC Distributed Control:** S7-1500 acts as a Master Routing Controller, managing load balancing for multiple S7-300 Line Controllers.
+*   **Bus System Expertise:** Implementation of AS-Interface for digital field sensors and Profinet for high-speed I/O and VFD (G120) control.
+*   **Fail-Safe Design:** Heartbeat monitoring and communication watchdog logic to handle Profinet cable breaks or PLC failures without system collision.
+*   **R&D Mindset:** Developed a reusable software library for standard conveyor modules (Merge, Divert, Accumulation).
 
 ---
 
-## Project Life Cycle and Experience
-This project reflects a complete Project Engineering and Commissioning cycle:
-1.  Requirement Definition: Throughput analysis and risk identification.
-2.  Software Engineering: Standard library development with an R&D focus.
-3.  Integration: Multi-PLC data exchange mapping.
-4.  Testing: Virtual commissioning of alarm matrices and throughput dashboards.
-5.  Documentation: Creation of site-ready commissioning checklists and naming standards.
-
----
-
-## Skills Demonstrated
-*   Siemens PLCs: Advanced knowledge in S7-1500 and S7-300 series.
-*   Languages: Proficient in STL, SCL, and LAD.
-*   Bus Systems: Practical application of Profinet and AS-Interface.
-*   Leadership: Acting as a Controls Lead, managing system architecture and risk mitigation.
-*   Domain: Specialized knowledge in Baggage Handling and Material Handling systems.
+## Project Engineering Experience
+*   **Requirement Definition:** Translating high-level baggage handling requirements into detailed software specifications.
+*   **Risk Mitigation:** Identification of technical risks (congested lanes, sensor failures) and implementation of software-based recovery routines.
+*   **Commissioning:** Experience in system integration, site testing, and multicultural stakeholder coordination.
 
 ---
 Contact: Aftab | Email: [Your Email Address]
