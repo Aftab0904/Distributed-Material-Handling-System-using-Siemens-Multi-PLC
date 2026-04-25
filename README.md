@@ -1,7 +1,12 @@
 # Distributed Material Handling System using Siemens Multi-PLC Architecture
 
+![Tech Stack](https://img.shields.io/badge/PLC-Siemens_S7--1500%2F300-blue?style=for-the-badge&logo=siemens)
+![Software](https://img.shields.io/badge/TIA_Portal-V17%2FV18-orange?style=for-the-badge)
+![Languages](https://img.shields.io/badge/Languages-STL_|_SCL_|_CPP_|_Python-green?style=for-the-badge)
+![Network](https://img.shields.io/badge/Network-Profinet_|_AS--i-red?style=for-the-badge)
+
 ## Project Overview
-This project implements an industrial-grade Baggage Handling System (BHS) using a distributed Siemens PLC architecture. It demonstrates a high-complexity integration of Siemens S7-1500 and S7-300 series controllers, multi-language software development (STL, SCL, C++, Python), and advanced TIA Portal library management.
+This project implements an industrial-grade Baggage Handling System (BHS) using a distributed Siemens PLC architecture. It demonstrates a high-complexity integration of Siemens S7-1500 and S7-300 series controllers, multi-language software development (STL, SCL, C++, Python), and aggressive TIA Portal library management.
 
 The system is optimized for high-throughput logistics and airport baggage routing, featuring edge analytics for predictive maintenance and real-time performance monitoring.
 
@@ -56,10 +61,16 @@ graph TD
 
 ---
 
-## Real-time Performance Analytics
-The following chart represents the simulated material flow throughput from the system, generated using our Edge Analytics Python module. This data is extracted via OPC-UA from the PLC and processed for management reporting.
+## System Monitoring & SCADA Dashboards
+The following visualizations represent data extracted from the system for both engineering diagnostics and management oversight.
 
+### 1. Real-time Throughput Analytics
+This chart tracks the items-per-minute flow across the Master and Sub-controller lines, enabling bottleneck identification.
 ![System Throughput Analytics](./assets/system_throughput_analytics.png)
+
+### 2. HMI Device Health Dashboard
+A simulated SCADA view showing the real-time health index of field devices. Lower values indicate potential maintenance requirements (e.g., motor bearing wear or sensor misalignment detected via C++ high-speed analysis).
+![HMI Health Dashboard](./assets/hmi_health_dashboard.png)
 
 ---
 
@@ -94,6 +105,3 @@ This project showcases the ability to act as a Controls Lead by integrating mult
 *   **Requirement Definition:** Translating high-level baggage handling requirements into detailed software specifications.
 *   **Risk Mitigation:** Identification of technical risks (congested lanes, sensor failures) and implementation of software-based recovery routines.
 *   **Commissioning:** Experience in system integration, site testing, and multicultural stakeholder coordination.
-
----
-Contact: Aftab | Email: [Your Email Address]
