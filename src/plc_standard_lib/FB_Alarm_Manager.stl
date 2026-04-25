@@ -1,0 +1,57 @@
+FUNCTION_BLOCK "FB_Alarm_Manager"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.1
+   VAR_INPUT 
+      i_Critical_Fault : Bool;   // E-Stop / Fire
+      i_Warning : Bool;          // Jam / Maintenance due
+      i_Ack : Bool;              // Acknowledge Button
+   END_VAR
+
+   VAR_OUTPUT 
+      q_HMI_Alarm_Word : Word;   // Packed word for SCADA
+      q_Siren : Bool;
+   END_VAR
+
+   VAR 
+      s_Critical_Latch : Bool;
+      s_Warning_Latch : Bool;
+   END_VAR
+
+
+BEGIN
+NETWORK
+TITLE = Critical Fault Handling
+      A     #i_Critical_Fault;
+      S     #s_Critical_Latch;
+      A     #i_Ack;
+      AN    #i_Critical_Fault;
+      R     #s_Critical_Latch;
+
+NETWORK
+TITLE = Warning Handling
+      A     #i_Warning;
+      S     #s_Warning_Latch;
+      A     #i_Ack;
+      AN    #i_Warning;
+      R     #s_Warning_Latch;
+
+NETWORK
+TITLE = Output Mapping to SCADA Word
+      L     0;
+      T     #q_HMI_Alarm_Word;
+      
+      A     #s_Critical_Latch;
+      =     L      20.0;       // Temp bit for bitwise packing
+      
+      A     #s_Warning_Latch;
+      =     L      20.1;
+      
+      L     LW     20;         // Load the temp word
+      T     #q_HMI_Alarm_Word;
+
+NETWORK
+TITLE = Audible Alarm (Siren)
+      A     #s_Critical_Latch;
+      =     #q_Siren;
+
+END_FUNCTION_BLOCK

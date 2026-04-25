@@ -1,0 +1,61 @@
+FUNCTION_BLOCK "FB_System_State_Machine"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.1
+   VAR_INPUT 
+      i_Start_PB : Bool;
+      i_Stop_PB : Bool;
+      i_Fault_Present : Bool;
+   END_VAR
+
+   VAR_OUTPUT 
+      q_System_Status : Int; // 0:IDLE, 1:STARTING, 2:RUNNING, 3:FAULT
+   END_VAR
+
+   VAR 
+      s_State : Int; // Internal State
+   END_VAR
+
+
+BEGIN
+NETWORK
+TITLE = State Transitions (STL)
+      L     #s_State;
+      JL    L_END;
+      JU    L_IDLE;      // Case 0
+      JU    L_START;     // Case 1
+      JU    L_RUN;       // Case 2
+      JU    L_FAULT;     // Case 3
+L_END:  BEU;
+
+L_IDLE: A     #i_Start_PB;
+      AN    #i_Fault_Present;
+      JCN   L_OUT;
+      L     1;           // Move to STARTING
+      T     #s_State;
+      JU    L_OUT;
+
+L_START: L     2;           // Transition to RUNNING (Simulated delay omitted)
+      T     #s_State;
+      JU    L_OUT;
+
+L_RUN:  A     #i_Stop_PB;
+      O     #i_Fault_Present;
+      JCN   L_OUT;
+      A     #i_Fault_Present;
+      JC    L_TO_F;
+      L     0;           // Back to IDLE
+      T     #s_State;
+      JU    L_OUT;
+L_TO_F: L     3;           // Go to FAULT
+      T     #s_State;
+      JU    L_OUT;
+
+L_FAULT: AN    #i_Fault_Present;
+      JCN   L_OUT;
+      L     0;           // Reset to IDLE
+      T     #s_State;
+
+L_OUT:  L     #s_State;
+      T     #q_System_Status;
+
+END_FUNCTION_BLOCK

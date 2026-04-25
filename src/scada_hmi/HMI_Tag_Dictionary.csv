@@ -1,0 +1,10 @@
+Tag Name,PLC Address,Data Type,Description
+System_Status,DB1.DBW0,Int,"0:Idle, 1:Start, 2:Run, 3:Fault"
+Line1_Throughput,DB10.DBD4,Real,Items per minute on Line 1
+Line2_Throughput,DB10.DBD8,Real,Items per minute on Line 2
+Global_EStop,I0.0,Bool,Hardwired Emergency Stop Status
+Comm_Fault_Sub1,DB20.DBX0.0,Bool,Communication failure with PLC 300-1
+Motor_Line1_Current,DB50.DBD10,Real,Current feedback from VFD 1
+Diverter_Position,DB60.DBW2,Int,"1:Straight, 2:Divert"
+Reset_System,DB1.DBX10.0,Bool,HMI Reset Command
+Total_Item_Count,DB10.DBD12,DInt,Total items processed since last reset

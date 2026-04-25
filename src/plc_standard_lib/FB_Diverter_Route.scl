@@ -1,0 +1,40 @@
+FUNCTION_BLOCK "FB_Diverter_Route"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      i_Item_Present : Bool;
+      i_Target_Lane : Int;   // 1=Straight, 2=Divert
+      i_Divert_Feedback : Bool;
+      i_Straight_Feedback : Bool;
+   END_VAR
+
+   VAR_OUTPUT 
+      q_Solenoid_Divert : Bool;
+      q_Solenoid_Straight : Bool;
+      q_Error : Bool;
+   END_VAR
+
+   VAR 
+      s_Transit_Timer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+   END_VAR
+
+
+BEGIN
+	// Routing Logic
+	IF #i_Target_Lane = 2 THEN
+	    #q_Solenoid_Divert := TRUE;
+	    #q_Solenoid_Straight := FALSE;
+	ELSE
+	    #q_Solenoid_Divert := FALSE;
+	    #q_Solenoid_Straight := TRUE;
+	END_IF;
+	
+	// Feedback Monitoring
+	#s_Transit_Timer(IN := (#q_Solenoid_Divert AND NOT #i_Divert_Feedback) OR (#q_Solenoid_Straight AND NOT #i_Straight_Feedback),
+	                 PT := T#2S);
+	
+	IF #s_Transit_Timer.Q THEN
+	    #q_Error := TRUE;
+	END_IF;
+	
+END_FUNCTION_BLOCK

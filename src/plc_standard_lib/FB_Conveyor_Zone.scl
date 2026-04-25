@@ -1,0 +1,44 @@
+FUNCTION_BLOCK "FB_Conveyor_Zone"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      i_PE_Entry : Bool;   // Photo-eye at entry
+      i_PE_Exit : Bool;    // Photo-eye at exit
+      i_Next_Zone_Free : Bool;   // Feedback from downstream zone
+      i_Auto_Mode : Bool;  // 1 = Auto, 0 = Manual
+   END_VAR
+
+   VAR_OUTPUT 
+      q_Motor_Run : Bool;
+      q_Occupied : Bool;   // Zone currently holds an item
+   END_VAR
+
+   VAR 
+      s_Occupied : Bool;
+      s_Jam_Timer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+   END_VAR
+
+
+BEGIN
+	// Occupancy Logic
+	IF #i_PE_Entry THEN
+	    #s_Occupied := TRUE;
+	ELSIF #i_PE_Exit THEN
+	    #s_Occupied := FALSE;
+	END_IF;
+	
+	#q_Occupied := #s_Occupied;
+	
+	// Movement Logic (Accumulation)
+	// Run if occupied and next zone is free, OR run to receive if not occupied
+	IF #i_Auto_Mode THEN
+	    #q_Motor_Run := (NOT #s_Occupied) OR (#s_Occupied AND #i_Next_Zone_Free);
+	ELSE
+	    #q_Motor_Run := FALSE;
+	END_IF;
+	
+	// Jam Detection (Example: PE blocked too long)
+	#s_Jam_Timer(IN := #i_PE_Entry AND #q_Motor_Run,
+	             PT := T#5S);
+	
+END_FUNCTION_BLOCK

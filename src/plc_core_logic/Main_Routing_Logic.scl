@@ -1,0 +1,46 @@
+FUNCTION "FC_Main_Routing_Logic" : Void
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      i_System_Ready : Bool;
+      i_Manual_Override : Bool;
+   END_VAR
+
+   VAR_IN_OUT 
+      iq_Line1_Queue : Int;
+      iq_Line2_Queue : Int;
+      iq_Round_Robin_Counter : Int;
+   END_VAR
+
+   VAR_OUTPUT 
+      q_Divert_Command : Int; // 1=Line1, 2=Line2
+   END_VAR
+
+
+BEGIN
+	IF NOT #i_System_Ready THEN
+	    #q_Divert_Command := 1; // Default to Straight
+	    RETURN;
+	END_IF;
+	
+	// Complex Routing Logic: Priority + Load Balancing
+	// Rule 1: If Line 1 is congested (>10 items), divert to Line 2
+	IF #iq_Line1_Queue > 10 AND #iq_Line2_Queue < 10 THEN
+	    #q_Divert_Command := 2;
+	
+	// Rule 2: If Line 2 is congested, divert to Line 1
+	ELSIF #iq_Line2_Queue > 10 AND #iq_Line1_Queue < 10 THEN
+	    #q_Divert_Command := 1;
+	
+	// Rule 3: Balanced Load - Use Round Robin
+	ELSE
+	    IF #iq_Round_Robin_Counter = 0 THEN
+	        #q_Divert_Command := 1;
+	        #iq_Round_Robin_Counter := 1;
+	    ELSE
+	        #q_Divert_Command := 2;
+	        #iq_Round_Robin_Counter := 0;
+	    END_IF;
+	END_IF;
+	
+END_FUNCTION

@@ -1,0 +1,56 @@
+FUNCTION_BLOCK "FB_Profinet_Exchange"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      i_PLC_ID : Int;
+      i_Local_Status : Word;
+      i_Local_Faults : Word;
+   END_VAR
+
+   VAR_IN_OUT 
+      iq_Send_Buffer : Array[0..63] of Byte;
+      iq_Recv_Buffer : Array[0..63] of Byte;
+   END_VAR
+
+   VAR_OUTPUT 
+      q_Remote_Command : Word;
+      q_Comm_Error : Bool;
+   END_VAR
+
+   VAR 
+      s_Heartbeat : Int;
+      s_Last_Heartbeat : Int;
+      s_Watchdog {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+   END_VAR
+
+
+BEGIN
+	// Heartbeat Generation
+	#s_Heartbeat := #s_Heartbeat + 1;
+	IF #s_Heartbeat > 32766 THEN #s_Heartbeat := 0; END_IF;
+	
+	// Map Local Data to Send Buffer (Big-Endian format for industrial comms)
+	#iq_Send_Buffer[0] := #i_Local_Status.%B0;
+	#iq_Send_Buffer[1] := #i_Local_Status.%B1;
+	#iq_Send_Buffer[2] := #i_Local_Faults.%B0;
+	#iq_Send_Buffer[3] := #i_Local_Faults.%B1;
+	#iq_Send_Buffer[4] := INT_TO_BYTE(#s_Heartbeat / 256);
+	#iq_Send_Buffer[5] := INT_TO_BYTE(#s_Heartbeat MOD 256);
+	
+	// Map Recv Buffer to Commands
+	#q_Remote_Command.%B0 := #iq_Recv_Buffer[0];
+	#q_Remote_Command.%B1 := #iq_Recv_Buffer[1];
+	
+	// Communication Watchdog
+	IF #iq_Recv_Buffer[4] = INT_TO_BYTE(#s_Last_Heartbeat / 256) AND 
+	   #iq_Recv_Buffer[5] = INT_TO_BYTE(#s_Last_Heartbeat MOD 256) THEN
+	    // Heartbeat stuck
+	    #s_Watchdog(IN := TRUE, PT := T#500MS);
+	ELSE
+	    #s_Watchdog(IN := FALSE, PT := T#500MS);
+	    #s_Last_Heartbeat := BYTE_TO_INT(#iq_Recv_Buffer[4]) * 256 + BYTE_TO_INT(#iq_Recv_Buffer[5]);
+	END_IF;
+	
+	#q_Comm_Error := #s_Watchdog.Q;
+	
+END_FUNCTION_BLOCK
